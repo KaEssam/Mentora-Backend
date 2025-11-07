@@ -10,6 +10,7 @@ using Mentora.Domain.Interfaces;
 using Mentora.Domain.Services;
 using Mentora.APIs.Mappings;
 using Mentora.Infra.Services;
+using Mentora.APIs.service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -75,6 +76,8 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+builder.Services.Configure<cloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+builder.Services.AddScoped<cloudinaryService>();
 
 // Register custom services
 builder.Services.AddScoped<IJwtService, JwtService>();
