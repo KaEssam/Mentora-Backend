@@ -89,13 +89,11 @@ public class AuthController(
 
             _logger.LogInformation($"User {user.Email} registered successfully");
 
-            var userDto = _mapper.Map<UserDto>(user);
             var response = new AuthResponse
             {
                 Token = token,
                 RefreshToken = refreshToken,
                 Expiration = DateTime.UtcNow.AddMinutes(60),
-                User = userDto
             };
 
             return Ok(response);
@@ -136,13 +134,11 @@ public class AuthController(
 
             _logger.LogInformation($"User {user.Email} logged in successfully");
 
-            var userDto = _mapper.Map<UserDto>(user);
             var response = new AuthResponse
             {
                 Token = token,
                 RefreshToken = refreshToken,
                 Expiration = DateTime.UtcNow.AddMinutes(60),
-                User = userDto
             };
 
             return Ok(response);
@@ -187,13 +183,11 @@ public class AuthController(
             var newToken = _jwtService.GenerateToken(ConvertToUser(user));
             var newRefreshToken = _jwtService.GenerateRefreshToken();
 
-            var userDto = _mapper.Map<UserDto>(user);
             var response = new AuthResponse
             {
                 Token = newToken,
                 RefreshToken = newRefreshToken,
                 Expiration = DateTime.UtcNow.AddMinutes(60),
-                User = userDto
             };
 
             return Ok(response);
