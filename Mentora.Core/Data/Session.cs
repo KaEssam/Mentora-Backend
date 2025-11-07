@@ -1,0 +1,39 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Mentora.Core.Data;
+
+public class Session
+{
+    [Key]
+    public string Id { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(450)]
+    public string MentorId { get; set; } = string.Empty;
+
+    [Required]
+    public DateTime StartAt { get; set; }
+
+    [Required]
+    public DateTime EndAt { get; set; }
+
+    [Required]
+    public SessionStatus Status { get; set; }
+
+    [Required]
+    public SessionType Type { get; set; }
+
+    [Required]
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal Price { get; set; }
+
+    [StringLength(1000)]
+    public string? Notes { get; set; }
+
+    // Navigation properties
+    [ForeignKey("MentorId")]
+    public virtual User Mentor { get; set; } = null!;
+
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+}
