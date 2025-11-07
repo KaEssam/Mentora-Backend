@@ -10,7 +10,6 @@ using Mentora.Domain.Interfaces;
 using Mentora.Domain.Services;
 using Mentora.APIs.Mappings;
 using Mentora.Infra.Services;
-using Mentora.APIs.service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,8 +75,9 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
-builder.Services.Configure<cloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
-builder.Services.AddScoped<cloudinaryService>();
+
+// Configure Cloudinary Settings
+builder.Services.Configure<Mentora.Domain.Models.CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 // Register custom services
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -87,10 +87,14 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 
+// Register Infrastructure services
+builder.Services.AddScoped<IFileService, CloudinaryService>();
+
 // Register Infrastructure repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+builder.Services.AddScoped<IFileRepository, FileRepository>();
 
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));

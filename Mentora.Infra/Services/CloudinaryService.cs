@@ -1,14 +1,20 @@
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using Mentora.Core.Data;
 using Mentora.Domain.Interfaces;
 using Mentora.Domain.Models;
 using FileEntity = Mentora.Core.Data.File;
 
-namespace Mentora.Domain.Services;
+namespace Mentora.Infra.Services;
 
-public class FileService : IFileService
+public class CloudinaryService : IFileService
 {
+    private readonly Cloudinary _cloudinary;
     private readonly IFileRepository _fileRepository;
     private readonly IUserRepository _userRepository;
+    private readonly CloudinarySettings _cloudinarySettings;
     private readonly List<string> _allowedImageTypes = new()
     {
         "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml"
@@ -21,10 +27,21 @@ public class FileService : IFileService
     };
     private readonly long _maxFileSize = 10 * 1024 * 1024; // 10MB
 
-    public FileService(IFileRepository fileRepository, IUserRepository userRepository)
+    public CloudinaryService(
+        IFileRepository fileRepository,
+        IUserRepository userRepository,
+        IOptions<CloudinarySettings> cloudinarySettings)
     {
         _fileRepository = fileRepository;
         _userRepository = userRepository;
+        _cloudinarySettings = cloudinarySettings.Value;
+
+        var account = new Account(
+            _cloudinarySettings.CloudName,
+            _cloudinarySettings.ApiKey,
+            _cloudinarySettings.ApiSecret);
+
+        _cloudinary = new Cloudinary(account);
     }
 
     public async Task<FileUploadResult> UploadFileAsync(FileUploadRequest request, string userId)
@@ -38,14 +55,40 @@ public class FileService : IFileService
         if (!await ValidateFileAsync(request.FileContent, request.ContentType, request.FileSize))
             throw new ArgumentException("Invalid file");
 
+        // Upload to Cloudinary
+        var uploadParams = new RawUploadParams
+        {
+            File = new FileDescription(request.FileName, request.FileContent),
+            PublicId = $"{userId}/{Guid.NewGuid()}",
+            Folder = "mentora/uploads",
+            Overwrite = true
+        };
+
+        // Use ImageUpload for image files, RawUpload for other files
+        var uploadResult = _allowedImageTypes.Contains(request.ContentType)
+            ? await _cloudinary.UploadAsync(new ImageUploadParams
+            {
+                File = new FileDescription(request.FileName, request.FileContent),
+                PublicId = $"{userId}/{Guid.NewGuid()}",
+                Folder = "mentora/uploads",
+                Overwrite = true
+            })
+            : await _cloudinary.UploadAsync(uploadParams);
+
+        if (uploadResult.Error != null)
+            throw new InvalidOperationException($"Failed to upload file to Cloudinary: {uploadResult.Error.Message}");
+
         // Create file entity
         var fileEntity = new FileEntity
         {
             Id = Guid.NewGuid().ToString(),
-            FileName = $"{Guid.NewGuid()}{Path.GetExtension(request.FileName)}",
+            FileName = uploadResult.PublicId,
             OriginalFileName = request.FileName,
             ContentType = request.ContentType,
             FileSize = request.FileSize,
+            FilePath = uploadResult.SecureUrl?.ToString(),
+            PublicUrl = uploadResult.SecureUrl?.ToString(),
+            CloudinaryPublicId = uploadResult.PublicId,
             Description = request.Description,
             Tags = request.Tags,
             UploadedById = userId,
@@ -57,7 +100,6 @@ public class FileService : IFileService
         // Save to database
         var createdFile = await _fileRepository.CreateAsync(fileEntity);
 
-        // Return result - URL will be set by infrastructure layer after cloud upload
         return new FileUploadResult
         {
             Id = createdFile.Id,
@@ -132,6 +174,21 @@ public class FileService : IFileService
         if (file == null || file.UploadedById != userId)
             return false;
 
+        // Delete from Cloudinary if we have a public ID
+        if (!string.IsNullOrEmpty(file.CloudinaryPublicId))
+        {
+            var deletionParams = new DeletionParams(file.CloudinaryPublicId);
+            var deletionResult = await _cloudinary.DestroyAsync(deletionParams);
+
+            if (deletionResult.Error != null && deletionResult.Error.Message != "not found")
+            {
+                // Log error but don't fail the deletion if Cloudinary deletion fails
+                // In production, you might want to handle this differently
+                Console.WriteLine($"Failed to delete from Cloudinary: {deletionResult.Error.Message}");
+            }
+        }
+
+        // Delete from database
         return await _fileRepository.DeleteAsync(id);
     }
 

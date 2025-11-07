@@ -1,21 +1,54 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace Mentora.APIs.DTOs
 {
     public class FileDto
     {
-        public class FileUpload
+        public class FileUploadRequest
         {
-            public IFormFile file { get; set; }
+            [Required]
+            public IFormFile File { get; set; } = null!;
 
+            public string? Description { get; set; }
+
+            public string? Tags { get; set; }
         }
 
         public class FileUploadResult
         {
-            public string url { get; set; }
+            public string Id { get; set; } = string.Empty;
+            public string FileName { get; set; } = string.Empty;
+            public string OriginalFileName { get; set; } = string.Empty;
+            public string ContentType { get; set; } = string.Empty;
+            public long FileSize { get; set; }
+            public string Url { get; set; } = string.Empty;
+            public string? Description { get; set; }
+            public string? Tags { get; set; }
+            public DateTime UploadedAt { get; set; }
+        }
+
+        public class FileResponse
+        {
+            public string Id { get; set; } = string.Empty;
+            public string FileName { get; set; } = string.Empty;
+            public string OriginalFileName { get; set; } = string.Empty;
+            public string ContentType { get; set; } = string.Empty;
+            public long FileSize { get; set; }
+            public string Url { get; set; } = string.Empty;
+            public string? Description { get; set; }
+            public string? Tags { get; set; }
+            public string? UploadedById { get; set; }
+            public string? UploadedByName { get; set; }
+            public DateTime UploadedAt { get; set; }
+            public DateTime UpdatedAt { get; set; }
+            public bool IsActive { get; set; }
+        }
+
+        public class FileUpdateRequest
+        {
+            public string? Description { get; set; }
+            public string? Tags { get; set; }
+            public bool IsActive { get; set; } = true;
         }
     }
 }
