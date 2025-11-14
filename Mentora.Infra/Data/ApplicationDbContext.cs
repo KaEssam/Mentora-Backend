@@ -64,6 +64,19 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                   .HasForeignKey(e => e.SessionId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            // Configure explicit relationships with ApplicationUser to avoid shadow properties
+            entity.HasOne<ApplicationUser>()
+                  .WithMany(e => e.MentorBookings)
+                  .HasForeignKey(e => e.MentorId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .HasConstraintName("FK_Booking_Mentor_ApplicationUser");
+
+            entity.HasOne<ApplicationUser>()
+                  .WithMany(e => e.MenteeBookings)
+                  .HasForeignKey(e => e.MenteeId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .HasConstraintName("FK_Booking_Mentee_ApplicationUser");
+
             // Ignore the navigation properties to User since they conflict with ApplicationUser mappings
             entity.Ignore(e => e.Mentor);
             entity.Ignore(e => e.Mentee);

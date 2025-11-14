@@ -55,6 +55,14 @@ public class ProfileService : IProfileService
         if (user == null)
             throw new ArgumentException("User not found");
 
+        // Debug: Log incoming request values
+        Console.WriteLine($"UpdateProfileAsync called for user: {userId}");
+        Console.WriteLine($"Request values - FirstName: '{request.FirstName}', LastName: '{request.LastName}', Bio: '{request.Bio}'");
+        Console.WriteLine($"Request values - Title: '{request.Title}', Company: '{request.Company}', Location: '{request.Location}'");
+        Console.WriteLine($"Request values - Skills: '{request.Skills}', Languages: '{request.Languages}', Education: '{request.Education}'");
+        Console.WriteLine($"Request values - ExperienceYears: {request.ExperienceYears}, SocialMedia: '{request.SocialMedia}'");
+        Console.WriteLine($"Has ProfileImage: {request.ProfileImage != null}");
+
         // Handle profile image upload if provided
         if (request.ProfileImage != null)
         {
@@ -62,33 +70,47 @@ public class ProfileService : IProfileService
                 throw new ArgumentException("Invalid profile image");
 
             var imageUrl = await UploadProfileImageAsync(request.ProfileImage, userId);
+            Console.WriteLine($"Upload successful. Image URL: {imageUrl}");
             user.ProfileImageUrl = imageUrl;
         }
 
-        // Create a new user instance with only the fields we want to update
-        // This avoids Entity Framework tracking conflicts
+        // Create a new user instance with only the fields that should be updated
+        // This avoids Entity Framework tracking conflicts and only updates provided fields
         var userToUpdate = new User
         {
             Id = user.Id,
             Email = user.Email, // Email shouldn't change in profile update
-            FirstName = request.FirstName ?? user.FirstName,
-            LastName = request.LastName ?? user.LastName,
-            Bio = request.Bio ?? user.Bio,
+
+            // Only update fields if they are provided in the request and not empty strings or placeholder values
+            FirstName = (!string.IsNullOrEmpty(request.FirstName) && request.FirstName != "string") ? request.FirstName : user.FirstName,
+            LastName = (!string.IsNullOrEmpty(request.LastName) && request.LastName != "string") ? request.LastName : user.LastName,
+            Bio = (!string.IsNullOrEmpty(request.Bio) && request.Bio != "string") ? request.Bio : user.Bio,
             ProfileImageUrl = user.ProfileImageUrl, // Already set above if image was uploaded
-            Title = request.Title ?? user.Title,
-            Company = request.Company ?? user.Company,
-            Location = request.Location ?? user.Location,
-            Skills = request.Skills ?? user.Skills,
-            Languages = request.Languages ?? user.Languages,
-            ExperienceYears = request.ExperienceYears ?? user.ExperienceYears,
-            Education = request.Education ?? user.Education,
-            SocialMedia = request.SocialMedia ?? user.SocialMedia,
+            Title = (!string.IsNullOrEmpty(request.Title) && request.Title != "string") ? request.Title : user.Title,
+            Company = (!string.IsNullOrEmpty(request.Company) && request.Company != "string") ? request.Company : user.Company,
+            Location = (!string.IsNullOrEmpty(request.Location) && request.Location != "string") ? request.Location : user.Location,
+            Skills = (!string.IsNullOrEmpty(request.Skills) && request.Skills != "string") ? request.Skills : user.Skills,
+            Languages = (!string.IsNullOrEmpty(request.Languages) && request.Languages != "string") ? request.Languages : user.Languages,
+            Education = (!string.IsNullOrEmpty(request.Education) && request.Education != "string") ? request.Education : user.Education,
+            SocialMedia = (!string.IsNullOrEmpty(request.SocialMedia) && request.SocialMedia != "string") ? request.SocialMedia : user.SocialMedia,
+
+            // Only update ExperienceYears if it's greater than 0 (since 0 might be default)
+            ExperienceYears = (request.ExperienceYears.HasValue && request.ExperienceYears.Value > 0)
+                ? request.ExperienceYears.Value
+                : user.ExperienceYears,
+
             CreatedAt = user.CreatedAt,
             UpdatedAt = DateTime.UtcNow
         };
 
+        // Debug: Check what we're about to save
+        Console.WriteLine($"About to update user. ProfileImageUrl: {userToUpdate.ProfileImageUrl}");
+
         // Save user changes
         var updatedUser = await _userService.UpdateUserAsync(userToUpdate);
+
+        // Debug: Check what was returned
+        Console.WriteLine($"Update complete. Returned ProfileImageUrl: {updatedUser.ProfileImageUrl}");
 
         // Return updated profile
         return new UserProfileDto
@@ -133,6 +155,8 @@ public class ProfileService : IProfileService
         // User validation should be handled by the calling method
         // Skip user validation here to avoid Entity Framework tracking conflicts
 
+        Console.WriteLine($"UploadProfileImageAsync called. File: {imageFile.FileName}, Size: {imageFile.Length}, Type: {imageFile.ContentType}");
+
         using var stream = imageFile.OpenReadStream();
 
         var fileRequest = new Models.FileUploadRequest
@@ -145,7 +169,16 @@ public class ProfileService : IProfileService
             Tags = "profile"
         };
 
-        var uploadResult = await _fileService.UploadFileAsync(fileRequest, userId);
-        return uploadResult.Url;
+        try
+        {
+            var uploadResult = await _fileService.UploadFileAsync(fileRequest, userId);
+            Console.WriteLine($"File service returned URL: {uploadResult.Url}");
+            return uploadResult.Url;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"File upload failed: {ex.Message}");
+            throw;
+        }
     }
 }

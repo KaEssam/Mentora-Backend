@@ -89,6 +89,7 @@ builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 
 // Register Infrastructure services
+// Switching back to CloudinaryService - it was working before
 builder.Services.AddScoped<IFileService, CloudinaryService>();
 
 // Register Infrastructure repositories
