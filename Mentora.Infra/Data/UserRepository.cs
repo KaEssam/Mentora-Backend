@@ -103,15 +103,37 @@ public class UserRepository : IUserRepository
 
     public async Task<User> UpdateAsync(User user)
     {
-        var applicationUser = ConvertToApplicationUser(user);
-        var result = await _userManager.UpdateAsync(applicationUser);
+        // Get the existing ApplicationUser to avoid tracking conflicts
+        var existingApplicationUser = await _userManager.FindByIdAsync(user.Id);
+        if (existingApplicationUser == null)
+        {
+            throw new ArgumentException("User not found");
+        }
+
+        // Update properties on the existing tracked entity
+        existingApplicationUser.FirstName = user.FirstName;
+        existingApplicationUser.LastName = user.LastName;
+        existingApplicationUser.Bio = user.Bio;
+        existingApplicationUser.ProfileImageUrl = user.ProfileImageUrl;
+        existingApplicationUser.Title = user.Title;
+        existingApplicationUser.Company = user.Company;
+        existingApplicationUser.Location = user.Location;
+        existingApplicationUser.Skills = user.Skills;
+        existingApplicationUser.Languages = user.Languages;
+        existingApplicationUser.ExperienceYears = user.ExperienceYears;
+        existingApplicationUser.Education = user.Education;
+        existingApplicationUser.SocialMedia = user.SocialMedia;
+        existingApplicationUser.UpdatedAt = DateTime.UtcNow;
+
+        // Update the tracked entity
+        var result = await _userManager.UpdateAsync(existingApplicationUser);
 
         if (!result.Succeeded)
         {
             throw new InvalidOperationException($"Failed to update user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
         }
 
-        return ConvertToUser(applicationUser);
+        return ConvertToUser(existingApplicationUser);
     }
 
     public async Task<bool> DeleteAsync(string id)

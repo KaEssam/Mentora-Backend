@@ -13,7 +13,6 @@ public class CloudinaryService : IFileService
 {
     private readonly Cloudinary _cloudinary;
     private readonly IFileRepository _fileRepository;
-    private readonly IUserRepository _userRepository;
     private readonly CloudinarySettings _cloudinarySettings;
     private readonly List<string> _allowedImageTypes = new()
     {
@@ -29,12 +28,26 @@ public class CloudinaryService : IFileService
 
     public CloudinaryService(
         IFileRepository fileRepository,
-        IUserRepository userRepository,
         IOptions<CloudinarySettings> cloudinarySettings)
     {
         _fileRepository = fileRepository;
-        _userRepository = userRepository;
         _cloudinarySettings = cloudinarySettings.Value;
+
+        // Log configuration for debugging (remove in production)
+        Console.WriteLine($"Cloudinary Configuration:");
+        Console.WriteLine($"  CloudName: {_cloudinarySettings.CloudName}");
+        Console.WriteLine($"  ApiKey: {_cloudinarySettings.ApiKey?.Substring(0, Math.Min(8, _cloudinarySettings.ApiKey?.Length ?? 0))}...");
+        Console.WriteLine($"  ApiSecret: {(!string.IsNullOrEmpty(_cloudinarySettings.ApiSecret) ? "***" : "NULL")}");
+
+        // Validate configuration
+        if (string.IsNullOrEmpty(_cloudinarySettings.CloudName))
+            throw new ArgumentException("Cloudinary CloudName is not configured");
+
+        if (string.IsNullOrEmpty(_cloudinarySettings.ApiKey))
+            throw new ArgumentException("Cloudinary ApiKey is not configured");
+
+        if (string.IsNullOrEmpty(_cloudinarySettings.ApiSecret))
+            throw new ArgumentException("Cloudinary ApiSecret is not configured");
 
         var account = new Account(
             _cloudinarySettings.CloudName,
@@ -46,80 +59,98 @@ public class CloudinaryService : IFileService
 
     public async Task<FileUploadResult> UploadFileAsync(FileUploadRequest request, string userId)
     {
-        // Validate user exists
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
-            throw new ArgumentException("User not found");
+        // Skip user validation - it should be handled at the service layer
+        // to avoid Entity Framework tracking conflicts
 
         // Validate file
         if (!await ValidateFileAsync(request.FileContent, request.ContentType, request.FileSize))
             throw new ArgumentException("Invalid file");
 
         // Upload to Cloudinary
-        var uploadParams = new RawUploadParams
-        {
-            File = new FileDescription(request.FileName, request.FileContent),
-            PublicId = $"{userId}/{Guid.NewGuid()}",
-            Folder = "mentora/uploads",
-            Overwrite = true
-        };
+        var publicId = $"{userId}/{Guid.NewGuid()}";
 
-        // Use ImageUpload for image files, RawUpload for other files
-        var uploadResult = _allowedImageTypes.Contains(request.ContentType)
-            ? await _cloudinary.UploadAsync(new ImageUploadParams
+        try
+        {
+            RawUploadResult uploadResult;
+
+            if (_allowedImageTypes.Contains(request.ContentType))
             {
-                File = new FileDescription(request.FileName, request.FileContent),
-                PublicId = $"{userId}/{Guid.NewGuid()}",
-                Folder = "mentora/uploads",
-                Overwrite = true
-            })
-            : await _cloudinary.UploadAsync(uploadParams);
+                var imageUploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(request.FileName, request.FileContent),
+                    PublicId = publicId,
+                    Folder = "mentora/uploads",
+                    Overwrite = true
+                };
+                uploadResult = await _cloudinary.UploadAsync(imageUploadParams);
+            }
+            else
+            {
+                var rawUploadParams = new RawUploadParams
+                {
+                    File = new FileDescription(request.FileName, request.FileContent),
+                    PublicId = publicId,
+                    Folder = "mentora/uploads",
+                    Overwrite = true
+                };
+                uploadResult = await _cloudinary.UploadAsync(rawUploadParams);
+            }
 
-        if (uploadResult.Error != null)
-            throw new InvalidOperationException($"Failed to upload file to Cloudinary: {uploadResult.Error.Message}");
+            if (uploadResult.Error != null)
+            {
+                throw new InvalidOperationException($"Failed to upload file to Cloudinary: {uploadResult.Error.Message}. Cloud name: {_cloudinarySettings.CloudName}");
+            }
 
-        // Create file entity
-        var fileEntity = new FileEntity
+            // Create file entity
+            var fileEntity = new FileEntity
+            {
+                Id = Guid.NewGuid().ToString(),
+                FileName = uploadResult.PublicId,
+                OriginalFileName = request.FileName,
+                ContentType = request.ContentType,
+                FileSize = request.FileSize,
+                FilePath = uploadResult.SecureUrl?.ToString(),
+                PublicUrl = uploadResult.SecureUrl?.ToString(),
+                CloudinaryPublicId = uploadResult.PublicId,
+                Description = request.Description,
+                Tags = request.Tags,
+                UploadedById = userId,
+                UploadedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                IsActive = true
+            };
+
+            // Save to database
+            var createdFile = await _fileRepository.CreateAsync(fileEntity);
+
+            return new FileUploadResult
+            {
+                Id = createdFile.Id,
+                FileName = createdFile.FileName,
+                OriginalFileName = createdFile.OriginalFileName,
+                ContentType = createdFile.ContentType,
+                FileSize = createdFile.FileSize,
+                Url = createdFile.PublicUrl ?? string.Empty,
+                Description = createdFile.Description,
+                Tags = createdFile.Tags,
+                UploadedAt = createdFile.UploadedAt
+            };
+        }
+        catch (Exception ex)
         {
-            Id = Guid.NewGuid().ToString(),
-            FileName = uploadResult.PublicId,
-            OriginalFileName = request.FileName,
-            ContentType = request.ContentType,
-            FileSize = request.FileSize,
-            FilePath = uploadResult.SecureUrl?.ToString(),
-            PublicUrl = uploadResult.SecureUrl?.ToString(),
-            CloudinaryPublicId = uploadResult.PublicId,
-            Description = request.Description,
-            Tags = request.Tags,
-            UploadedById = userId,
-            UploadedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            IsActive = true
-        };
+            // Log the full exception for debugging
+            Console.WriteLine($"Cloudinary upload error: {ex.Message}");
+            Console.WriteLine($"Cloud name: {_cloudinarySettings.CloudName}");
+            Console.WriteLine($"API Key: {_cloudinarySettings.ApiKey?.Substring(0, Math.Min(8, _cloudinarySettings.ApiKey?.Length ?? 0))}...");
 
-        // Save to database
-        var createdFile = await _fileRepository.CreateAsync(fileEntity);
-
-        return new FileUploadResult
-        {
-            Id = createdFile.Id,
-            FileName = createdFile.FileName,
-            OriginalFileName = createdFile.OriginalFileName,
-            ContentType = createdFile.ContentType,
-            FileSize = createdFile.FileSize,
-            Url = createdFile.PublicUrl ?? string.Empty,
-            Description = createdFile.Description,
-            Tags = createdFile.Tags,
-            UploadedAt = createdFile.UploadedAt
-        };
+            throw new InvalidOperationException($"Failed to upload file to Cloudinary: {ex.Message}. Please check your Cloudinary configuration.", ex);
+        }
     }
 
     public async Task<FileResponse?> GetFileByIdAsync(string id)
     {
         var file = await _fileRepository.GetByIdAsync(id);
         if (file == null) return null;
-
-        var user = await _userRepository.GetByIdAsync(file.UploadedById ?? string.Empty);
 
         return new FileResponse
         {
@@ -132,7 +163,7 @@ public class CloudinaryService : IFileService
             Description = file.Description,
             Tags = file.Tags,
             UploadedById = file.UploadedById,
-            UploadedByName = $"{user?.FirstName} {user?.LastName}",
+            UploadedByName = "User", // Will be populated at a higher level if needed
             UploadedAt = file.UploadedAt,
             UpdatedAt = file.UpdatedAt,
             IsActive = file.IsActive
@@ -142,30 +173,22 @@ public class CloudinaryService : IFileService
     public async Task<IEnumerable<FileResponse>> GetUserFilesAsync(string userId)
     {
         var files = await _fileRepository.GetUserFilesAsync(userId);
-        var fileResponses = new List<FileResponse>();
-
-        foreach (var file in files)
+        return files.Select(file => new FileResponse
         {
-            var user = await _userRepository.GetByIdAsync(file.UploadedById ?? string.Empty);
-            fileResponses.Add(new FileResponse
-            {
-                Id = file.Id,
-                FileName = file.FileName,
-                OriginalFileName = file.OriginalFileName,
-                ContentType = file.ContentType,
-                FileSize = file.FileSize,
-                Url = file.PublicUrl ?? string.Empty,
-                Description = file.Description,
-                Tags = file.Tags,
-                UploadedById = file.UploadedById,
-                UploadedByName = $"{user?.FirstName} {user?.LastName}",
-                UploadedAt = file.UploadedAt,
-                UpdatedAt = file.UpdatedAt,
-                IsActive = file.IsActive
-            });
-        }
-
-        return fileResponses;
+            Id = file.Id,
+            FileName = file.FileName,
+            OriginalFileName = file.OriginalFileName,
+            ContentType = file.ContentType,
+            FileSize = file.FileSize,
+            Url = file.PublicUrl ?? string.Empty,
+            Description = file.Description,
+            Tags = file.Tags,
+            UploadedById = file.UploadedById,
+            UploadedByName = "User", // Will be populated at a higher level if needed
+            UploadedAt = file.UploadedAt,
+            UpdatedAt = file.UpdatedAt,
+            IsActive = file.IsActive
+        });
     }
 
     public async Task<bool> DeleteFileAsync(string id, string userId)
@@ -204,7 +227,6 @@ public class CloudinaryService : IFileService
         file.UpdatedAt = DateTime.UtcNow;
 
         var updatedFile = await _fileRepository.UpdateAsync(file);
-        var user = await _userRepository.GetByIdAsync(updatedFile.UploadedById ?? string.Empty);
 
         return new FileResponse
         {
@@ -217,7 +239,7 @@ public class CloudinaryService : IFileService
             Description = updatedFile.Description,
             Tags = updatedFile.Tags,
             UploadedById = updatedFile.UploadedById,
-            UploadedByName = $"{user?.FirstName} {user?.LastName}",
+            UploadedByName = "User", // Will be populated at a higher level if needed
             UploadedAt = updatedFile.UploadedAt,
             UpdatedAt = updatedFile.UpdatedAt,
             IsActive = updatedFile.IsActive

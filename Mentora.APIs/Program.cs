@@ -84,6 +84,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 
 // Register Domain services
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 
