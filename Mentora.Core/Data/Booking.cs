@@ -9,8 +9,7 @@ public class Booking
     public string Id { get; set; } = string.Empty;
 
     [Required]
-    [StringLength(450)]
-    public string SessionId { get; set; } = string.Empty;
+    public int SessionId { get; set; }
 
     [Required]
     [StringLength(450)]

@@ -1,3 +1,4 @@
+﻿using Mentora.APIs.DTOs;
 using Mentora.Core.Data;
 using Mentora.Domain.Interfaces;
 
@@ -14,7 +15,7 @@ public class SessionService : ISessionService
         _bookingRepository = bookingRepository;
     }
 
-    public async Task<Session?> GetSessionByIdAsync(string id)
+    public async Task<Session?> GetSessionByIdAsync(int id)
     {
         return await _sessionRepository.GetByIdAsync(id);
     }
@@ -30,23 +31,52 @@ public class SessionService : ISessionService
         return allSessions.Where(s => s.Status == SessionStatus.Scheduled && s.StartAt > DateTime.UtcNow);
     }
 
-    public async Task<Session> CreateSessionAsync(Session session, string mentorId)
+    public async Task<ResponseSessionDto> CreateSessionAsync(CreateSessionDto session, string mentorId)
     {
-        // Business validation
-        if (!ValidateSessionTime(session.StartAt, session.EndAt))
-        {
-            throw new ArgumentException("Invalid session time. End time must be after start time and session must be at least 30 minutes.");
-        }
+        // مينفعش يكريت كذا سيشن ف نفس الوقت وخلال الوقت المحجوز
+        // السيشن هتبقي نص ساعة فقط ف مش لازم يدخل انتهاء السيشن
 
+
+        // Business validation
+        //if (!ValidateSessionTime(session.StartAt, session.EndAt))
+        //{
+        //    throw new ArgumentException("Invalid session time. End time must be after start time and session must be at least 30 minutes.");
+        //}
+
+        if (session.StartAt <= DateTime.UtcNow)
         if (session.StartAt <= DateTime.UtcNow)
         {
             throw new ArgumentException("Session start time must be in the future.");
         }
 
-        session.MentorId = mentorId;
-        session.Status = SessionStatus.Scheduled;
+        if( await checkOverLap(mentorId, session.StartAt, session.StartAt.AddMinutes(30)))
+        {
+            throw new InvalidOperationException("cannot create session, slot existing");
+        }
 
-        return await _sessionRepository.CreateAsync(session);
+
+        var s = new Session
+        {
+            StartAt = session.StartAt,
+            EndAt = session.StartAt.AddMinutes(30),
+            Price = session.Price,
+            MentorId = mentorId,
+            Status = SessionStatus.Scheduled
+        };
+        //session.MentorId = mentorId;
+        //session.Status = SessionStatus.Scheduled;
+
+
+        var res = await _sessionRepository.CreateAsync(s);
+        return new ResponseSessionDto{ 
+            Id = res.Id,
+            StartAt = res.StartAt,
+            EndAt = res.EndAt,
+            Price = res.Price,
+            MentorId = mentorId,
+            Notes = res.Notes,
+            Status = SessionStatus.Scheduled
+        };
     }
 
     public async Task<Session> UpdateSessionAsync(Session session, string mentorId)
@@ -77,7 +107,7 @@ public class SessionService : ISessionService
         return await _sessionRepository.UpdateAsync(session);
     }
 
-    public async Task<bool> DeleteSessionAsync(string id, string mentorId)
+    public async Task<bool> DeleteSessionAsync(int id, string mentorId)
     {
         var session = await _sessionRepository.GetByIdAsync(id);
         if (session == null || session.MentorId != mentorId)
@@ -112,7 +142,7 @@ public class SessionService : ISessionService
         return true;
     }
 
-    public async Task<bool> IsSessionAvailable(string sessionId)
+    public async Task<bool> IsSessionAvailable(int sessionId)
     {
         var session = await _sessionRepository.GetByIdAsync(sessionId);
         if (session == null || session.Status != SessionStatus.Scheduled) return false;
@@ -124,5 +154,17 @@ public class SessionService : ISessionService
     public async Task<IEnumerable<Session>> GetSessionsByDateRangeAsync(DateTime startDate, DateTime endDate)
     {
         return await _sessionRepository.GetSessionsByDateRangeAsync(startDate, endDate);
+    }
+
+
+    private async Task<bool> checkOverLap(string mentorId, DateTime startAt, DateTime endAt)
+    {
+        var mentorSessions = await _sessionRepository.GetByMentorIdAsync(mentorId);
+
+        return mentorSessions.Any(existedSession =>
+        (startAt >= existedSession.StartAt && startAt < existedSession.EndAt||
+        endAt > existedSession.StartAt && endAt <= existedSession.EndAt ||
+        startAt <= existedSession.StartAt && endAt >= existedSession.EndAt));
+
     }
 }

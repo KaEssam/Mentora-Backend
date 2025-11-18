@@ -28,12 +28,6 @@ namespace Mentora.Infra.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ApplicationUserId1")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("MeetingUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -48,10 +42,8 @@ namespace Mentora.Infra.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("SessionId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("SessionId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -61,20 +53,82 @@ namespace Mentora.Infra.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationUserId");
+                    b.HasIndex("MenteeId");
 
-                    b.HasIndex("ApplicationUserId1");
+                    b.HasIndex("MentorId");
 
                     b.HasIndex("SessionId");
 
                     b.ToTable("Bookings");
                 });
 
-            modelBuilder.Entity("Mentora.Core.Data.Session", b =>
+            modelBuilder.Entity("Mentora.Core.Data.File", b =>
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CloudinaryPublicId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("FilePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("PublicUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Tags")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UploadedById")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UploadedById");
+
+                    b.ToTable("Files");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Data.Session", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("EndAt")
                         .HasColumnType("datetime2");
@@ -414,11 +468,17 @@ namespace Mentora.Infra.Migrations
                 {
                     b.HasOne("Mentora.Infra.Data.ApplicationUser", null)
                         .WithMany("MenteeBookings")
-                        .HasForeignKey("ApplicationUserId");
+                        .HasForeignKey("MenteeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Booking_Mentee_ApplicationUser");
 
                     b.HasOne("Mentora.Infra.Data.ApplicationUser", null)
                         .WithMany("MentorBookings")
-                        .HasForeignKey("ApplicationUserId1");
+                        .HasForeignKey("MentorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Booking_Mentor_ApplicationUser");
 
                     b.HasOne("Mentora.Core.Data.Session", "Session")
                         .WithMany("Bookings")
@@ -427,6 +487,15 @@ namespace Mentora.Infra.Migrations
                         .IsRequired();
 
                     b.Navigation("Session");
+                });
+
+            modelBuilder.Entity("Mentora.Core.Data.File", b =>
+                {
+                    b.HasOne("Mentora.Infra.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UploadedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Mentora.Core.Data.Session", b =>

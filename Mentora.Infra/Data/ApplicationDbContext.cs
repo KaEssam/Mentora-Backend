@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Mentora.Core.Data;
+using FileEntity = Mentora.Core.Data.File;
 
 namespace Mentora.Infra.Data;
 
@@ -13,6 +14,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     // User DbSet is provided by IdentityDbContext<ApplicationUser>
     public DbSet<Session> Sessions { get; set; }
     public DbSet<Booking> Bookings { get; set; }
+    public DbSet<FileEntity> Files { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -53,7 +55,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
-            entity.Property(e => e.SessionId).IsRequired().HasMaxLength(450);
+            entity.Property(e => e.SessionId).IsRequired();
             entity.Property(e => e.MentorId).IsRequired().HasMaxLength(450);
             entity.Property(e => e.MenteeId).IsRequired().HasMaxLength(450);
 
@@ -62,9 +64,41 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                   .HasForeignKey(e => e.SessionId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            // Configure explicit relationships with ApplicationUser to avoid shadow properties
+            entity.HasOne<ApplicationUser>()
+                  .WithMany(e => e.MentorBookings)
+                  .HasForeignKey(e => e.MentorId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .HasConstraintName("FK_Booking_Mentor_ApplicationUser");
+
+            entity.HasOne<ApplicationUser>()
+                  .WithMany(e => e.MenteeBookings)
+                  .HasForeignKey(e => e.MenteeId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .HasConstraintName("FK_Booking_Mentee_ApplicationUser");
+
             // Ignore the navigation properties to User since they conflict with ApplicationUser mappings
             entity.Ignore(e => e.Mentor);
             entity.Ignore(e => e.Mentee);
+        });
+
+        // Configure File entity
+        builder.Entity<FileEntity>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+            entity.Property(e => e.FileName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.OriginalFileName).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.ContentType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.UploadedById).IsRequired().HasMaxLength(450);
+
+            entity.HasOne<ApplicationUser>()
+                  .WithMany()
+                  .HasForeignKey(e => e.UploadedById)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Ignore the navigation property to User since it conflicts with ApplicationUser mapping
+            entity.Ignore(e => e.UploadedBy);
         });
 
         // Seed initial data

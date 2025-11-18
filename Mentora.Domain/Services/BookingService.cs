@@ -34,7 +34,7 @@ public class BookingService : IBookingService
         return await _bookingRepository.GetByMenteeIdAsync(menteeId);
     }
 
-    public async Task<Booking> CreateBookingAsync(string sessionId, string menteeId)
+    public async Task<Booking> CreateBookingAsync(int sessionId, string menteeId)
     {
         // Validate session exists and is available
         var session = await _sessionRepository.GetByIdAsync(sessionId);
@@ -142,7 +142,7 @@ public class BookingService : IBookingService
         return true;
     }
 
-    public async Task<bool> ValidateBooking(string sessionId, string menteeId)
+    public async Task<bool> ValidateBooking(int sessionId, string menteeId)
     {
         var session = await _sessionRepository.GetByIdAsync(sessionId);
         if (session == null) return false;
