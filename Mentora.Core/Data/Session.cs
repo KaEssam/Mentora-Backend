@@ -6,7 +6,7 @@ namespace Mentora.Core.Data;
 public class Session
 {
     [Key]
-    public string Id { get; set; } = string.Empty;
+    public int Id { get; set; }
 
     [Required]
     [StringLength(450)]

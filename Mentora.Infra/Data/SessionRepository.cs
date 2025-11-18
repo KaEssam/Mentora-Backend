@@ -13,7 +13,7 @@ public class SessionRepository : ISessionRepository
         _context = context;
     }
 
-    public async Task<Session?> GetByIdAsync(string id)
+    public async Task<Session?> GetByIdAsync(int id)
     {
         return await _context.Sessions
             .Include(s => s.Bookings)
@@ -52,7 +52,7 @@ public class SessionRepository : ISessionRepository
         return session;
     }
 
-    public async Task<bool> DeleteAsync(string id)
+    public async Task<bool> DeleteAsync(int id)
     {
         var session = await _context.Sessions.FindAsync(id);
         if (session == null) return false;
@@ -62,7 +62,7 @@ public class SessionRepository : ISessionRepository
         return true;
     }
 
-    public async Task<bool> ExistsAsync(string id)
+    public async Task<bool> ExistsAsync(int id)
     {
         return await _context.Sessions.AnyAsync(s => s.Id == id);
     }

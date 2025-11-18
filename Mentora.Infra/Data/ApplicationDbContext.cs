@@ -55,7 +55,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
-            entity.Property(e => e.SessionId).IsRequired().HasMaxLength(450);
+            entity.Property(e => e.SessionId).IsRequired();
             entity.Property(e => e.MentorId).IsRequired().HasMaxLength(450);
             entity.Property(e => e.MenteeId).IsRequired().HasMaxLength(450);
 

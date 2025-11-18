@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Mentora.Infra.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -197,10 +197,41 @@ namespace Mentora.Infra.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Sessions",
+                name: "Files",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    OriginalFileName = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    ContentType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    FileSize = table.Column<long>(type: "bigint", nullable: false),
+                    FilePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PublicUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CloudinaryPublicId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Tags = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UploadedById = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    UploadedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Files", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Files_AspNetUsers_UploadedById",
+                        column: x => x.UploadedById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Sessions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     MentorId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
                     StartAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -226,28 +257,28 @@ namespace Mentora.Infra.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    SessionId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    SessionId = table.Column<int>(type: "int", nullable: false),
                     MentorId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
                     MenteeId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     Type = table.Column<int>(type: "int", nullable: false),
-                    MeetingUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    ApplicationUserId1 = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    MeetingUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Bookings", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Bookings_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
+                        name: "FK_Booking_Mentee_ApplicationUser",
+                        column: x => x.MenteeId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Bookings_AspNetUsers_ApplicationUserId1",
-                        column: x => x.ApplicationUserId1,
+                        name: "FK_Booking_Mentor_ApplicationUser",
+                        column: x => x.MentorId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Bookings_Sessions_SessionId",
                         column: x => x.SessionId,
@@ -296,19 +327,24 @@ namespace Mentora.Infra.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bookings_ApplicationUserId",
+                name: "IX_Bookings_MenteeId",
                 table: "Bookings",
-                column: "ApplicationUserId");
+                column: "MenteeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bookings_ApplicationUserId1",
+                name: "IX_Bookings_MentorId",
                 table: "Bookings",
-                column: "ApplicationUserId1");
+                column: "MentorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_SessionId",
                 table: "Bookings",
                 column: "SessionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Files_UploadedById",
+                table: "Files",
+                column: "UploadedById");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Sessions_MentorId",
@@ -336,6 +372,9 @@ namespace Mentora.Infra.Migrations
 
             migrationBuilder.DropTable(
                 name: "Bookings");
+
+            migrationBuilder.DropTable(
+                name: "Files");
 
             migrationBuilder.DropTable(
                 name: "User");

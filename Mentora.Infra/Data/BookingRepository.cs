@@ -42,7 +42,7 @@ public class BookingRepository : IBookingRepository
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Booking>> GetBySessionIdAsync(string sessionId)
+    public async Task<IEnumerable<Booking>> GetBySessionIdAsync(int sessionId)
     {
         return await _context.Bookings
             .Where(b => b.SessionId == sessionId)
