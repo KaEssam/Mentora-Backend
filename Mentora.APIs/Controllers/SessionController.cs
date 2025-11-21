@@ -1,7 +1,6 @@
-using Mentora.APIs.DTOs;
+using Mentora.Domain.DTOs;
 using Mentora.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -9,7 +8,7 @@ namespace Mentora.APIs.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // All endpoints require authentication
+    [Authorize]
     public class SessionController : ControllerBase
     {
         private readonly ISessionService _service;
@@ -22,10 +21,16 @@ namespace Mentora.APIs.Controllers
         public async Task<IActionResult> CreateSessionAsync([FromBody] CreateSessionDto sessionDto)
         {
             var mentorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var result = await _service.CreateSessionAsync(sessionDto, mentorId);
+            return Ok(result);
+        }
 
-            var res = await _service.CreateSessionAsync(sessionDto, mentorId);
-
-            return Ok(res);
+        [HttpPost("recurring")]
+        public async Task<IActionResult> CreateRecurringSessionAsync([FromBody] CreateRecurringSessionDto sessionDto)
+        {
+            var mentorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var result = await _service.CreateRecurringSessionAsync(sessionDto, mentorId);
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
@@ -38,6 +43,13 @@ namespace Mentora.APIs.Controllers
             }
 
             return Ok(session);
+        }
+
+        [HttpGet("{id}/instances")]
+        public async Task<IActionResult> GetRecurringSessionInstancesAsync(int id)
+        {
+            var instances = await _service.GetRecurringSessionInstancesAsync(id);
+            return Ok(instances);
         }
 
         [HttpPut("{id}")]
@@ -77,6 +89,27 @@ namespace Mentora.APIs.Controllers
             }
 
             return NoContent();
+        }
+
+        [HttpGet("available")]
+        public async Task<IActionResult> GetAvailableSessionsAsync()
+        {
+            var sessions = await _service.GetAvailableSessionsAsync();
+            return Ok(sessions);
+        }
+
+        [HttpGet("mentor/{mentorId}")]
+        public async Task<IActionResult> GetSessionsByMentorAsync(string mentorId)
+        {
+            var sessions = await _service.GetSessionsByMentorAsync(mentorId);
+            return Ok(sessions);
+        }
+
+        [HttpGet("range")]
+        public async Task<IActionResult> GetSessionsByDateRangeAsync([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        {
+            var sessions = await _service.GetSessionsByDateRangeAsync(startDate, endDate);
+            return Ok(sessions);
         }
     }
 }

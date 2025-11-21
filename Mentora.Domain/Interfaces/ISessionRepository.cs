@@ -12,4 +12,5 @@ public interface ISessionRepository
     Task<bool> DeleteAsync(int id);
     Task<bool> ExistsAsync(int id);
     Task<IEnumerable<Session>> GetSessionsByDateRangeAsync(DateTime startDate, DateTime endDate);
+    Task<IEnumerable<Session>> GetRecurringInstancesAsync(int parentSessionId);
 }

@@ -75,4 +75,13 @@ public class SessionRepository : ISessionRepository
             .OrderBy(s => s.StartAt)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Session>> GetRecurringInstancesAsync(int parentSessionId)
+    {
+        return await _context.Sessions
+            .Where(s => s.ParentSessionId == parentSessionId)
+            .Include(s => s.Bookings)
+            .OrderBy(s => s.StartAt)
+            .ToListAsync();
+    }
 }

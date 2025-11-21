@@ -1,33 +1,37 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System;
 
-namespace Mentora.Core.Data;
-
-public class Booking
+namespace Mentora.Core.Data
 {
-    [Key]
-    public string Id { get; set; } = string.Empty;
+    public class Booking
+    {
+        public int Id { get; set; }
+        public string UserId { get; set; } = string.Empty;
+        public string MentorId { get; set; } = string.Empty;
+        public string SessionId { get; set; } = string.Empty;
+        public DateTime BookingDate { get; set; }
+        public DateTime SessionStartTime { get; set; }
+        public DateTime SessionEndTime { get; set; }
+        public decimal Amount { get; set; }
+        public string Currency { get; set; } = "USD";
+        public BookingStatus Status { get; set; } = BookingStatus.Pending;
+        public string? Notes { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        public string? MeetingUrl { get; set; }
+        public string? CancelReason { get; set; }
+        public DateTime? CancelledAt { get; set; }
+        public bool IsPaid { get; set; } = false;
+        public DateTime? PaidAt { get; set; }
+        public string? PaymentIntentId { get; set; }
+    }
 
-    [Required]
-    public int SessionId { get; set; }
-
-    [Required]
-    [StringLength(450)]
-    public string MentorId { get; set; } = string.Empty;
-
-    [Required]
-    [StringLength(450)]
-    public string MenteeId { get; set; } = string.Empty;
-
-    [Required]
-    public SessionStatus Status { get; set; }
-
-    [Required]
-    public SessionType Type { get; set; }
-
-    [StringLength(500)]
-    public string? MeetingUrl { get; set; }
-
-    // Navigation properties
-    public virtual Session Session { get; set; } = null!;
+    public enum BookingStatus
+    {
+        Pending = 0,
+        Confirmed = 1,
+        Cancelled = 2,
+        Completed = 3,
+        NoShow = 4,
+        Refunded = 5
+    }
 }

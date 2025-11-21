@@ -26,4 +26,7 @@ public class ApplicationUser : IdentityUser, IUser
     public virtual ICollection<Session> MentorSessions { get; set; } = new List<Session>();
     public virtual ICollection<Booking> MentorBookings { get; set; } = new List<Booking>();
     public virtual ICollection<Booking> MenteeBookings { get; set; } = new List<Booking>();
+    public virtual ICollection<SessionTemplate> CreatedSessionTemplates { get; set; } = new List<SessionTemplate>();
+    public virtual ICollection<Reminder> Reminders { get; set; } = new List<Reminder>();
+    public virtual ReminderSettings? ReminderSettings { get; set; }
 }

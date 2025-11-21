@@ -7,9 +7,11 @@ using System.Text;
 using Mentora.Infra.Data;
 using Mentora.Core.Data;
 using Mentora.Domain.Interfaces;
+using Mentora.Domain.Interfaces.Repositories;
 using Mentora.Domain.Services;
 using Mentora.APIs.Mappings;
 using Mentora.Infra.Services;
+using Mentora.Infra.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -107,6 +109,12 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IBookingValidationService, BookingValidationService>();
+builder.Services.AddScoped<ICancellationPolicyService, CancellationPolicyService>();
+builder.Services.AddScoped<ISessionTemplateService, Mentora.Domain.Services.SessionTemplateService>();
+
+// Register Infrastructure services
+builder.Services.AddScoped<IRecurrenceService, Mentora.Infra.Services.RecurrenceService>();
 
 // Register Infrastructure services (services that depend on ASP.NET Core Identity)
 builder.Services.AddScoped<IUserService, Mentora.Infra.Services.UserService>();
@@ -120,6 +128,24 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddScoped<ISessionTemplateRepository, Mentora.Infra.Data.SessionTemplateRepository>();
+
+// Reminder services
+builder.Services.AddScoped<IReminderService, Mentora.Domain.Services.ReminderService>();
+builder.Services.AddScoped<IEmailService, Mentora.Infra.Services.EmailService>();
+builder.Services.AddScoped<IReminderRepository, Mentora.Infra.Data.ReminderRepository>();
+builder.Services.AddScoped<IReminderSettingsRepository, Mentora.Infra.Data.ReminderSettingsRepository>();
+
+// Feedback services
+builder.Services.AddScoped<ISessionFeedbackService, Mentora.Domain.Services.SessionFeedbackService>();
+builder.Services.AddScoped<ISessionFeedbackRepository, Mentora.Infra.Data.SessionFeedbackRepository>();
+builder.Services.AddScoped<IFeedbackRatingRepository, Mentora.Infra.Data.FeedbackRatingRepository>();
+
+// Add background service for reminders (temporarily disabled due to EF Core relationship issues)
+// builder.Services.AddHostedService<ReminderBackgroundService>();
+
+// Configure email settings
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));

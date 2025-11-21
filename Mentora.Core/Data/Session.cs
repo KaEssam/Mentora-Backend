@@ -31,6 +31,15 @@ public class Session
     [StringLength(1000)]
     public string? Notes { get; set; }
 
+    // Recurrence properties
+    public bool IsRecurring { get; set; } = false;
+
+    public string? RecurrenceJson { get; set; } // Serialized RecurrenceDetails
+
+    public int? ParentSessionId { get; set; } // For recurring session instances
+    public Session? ParentSession { get; set; }
+
     // Navigation properties
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public virtual ICollection<Session> RecurringInstances { get; set; } = new List<Session>();
 }
