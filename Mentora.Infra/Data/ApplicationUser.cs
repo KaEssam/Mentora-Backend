@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Mentora.Domain.Models;
+using Mentora.Core.Data;
 
 namespace Mentora.Infra.Data;
 

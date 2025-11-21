@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Mentora.Domain.Interfaces;
-using Mentora.Core.Data;
+using Mentora.Domain.Models;
 
 namespace Mentora.Infra.Data;
 
@@ -16,41 +16,30 @@ public class UserRepository : IUserRepository
         _context = context;
     }
 
-    public async Task<ApplicationUser?> GetByIdAsync(string id)
+    public async Task<IUser?> GetByIdAsync(string id)
     {
         return await _userManager.FindByIdAsync(id);
     }
 
-    public async Task<ApplicationUser?> GetByEmailAsync(string email)
+    public async Task<IUser?> GetByEmailAsync(string email)
     {
         return await _userManager.FindByEmailAsync(email);
     }
 
-    public async Task<ApplicationUser> CreateAsync(ApplicationUser user)
+    public async Task<IUser> CreateAsync(IUser user, string password)
     {
-        var result = await _userManager.CreateAsync(user);
+        var applicationUser = user as ApplicationUser ?? throw new ArgumentException("User must be ApplicationUser");
+        var result = await _userManager.CreateAsync(applicationUser, password);
 
         if (!result.Succeeded)
         {
             throw new InvalidOperationException($"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
         }
 
-        return user;
+        return applicationUser;
     }
 
-    public async Task<ApplicationUser> CreateWithPasswordAsync(ApplicationUser user, string password)
-    {
-        var result = await _userManager.CreateAsync(user, password);
-
-        if (!result.Succeeded)
-        {
-            throw new InvalidOperationException($"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-        }
-
-        return user;
-    }
-
-    public async Task<ApplicationUser> UpdateAsync(ApplicationUser user)
+    public async Task<IUser> UpdateAsync(IUser user)
     {
         // Get the existing ApplicationUser to avoid tracking conflicts
         var existingApplicationUser = await _userManager.FindByIdAsync(user.Id);
@@ -100,8 +89,8 @@ public class UserRepository : IUserRepository
         return await _userManager.Users.AnyAsync(u => u.Email == email);
     }
 
-    public async Task<IEnumerable<ApplicationUser>> GetAllAsync()
+    public async Task<IEnumerable<IUser>> GetAllAsync()
     {
-        return await _userManager.Users.ToListAsync();
+        return await _userManager.Users.ToListAsync<IUser>();
     }
 }

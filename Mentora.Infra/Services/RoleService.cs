@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Mentora.Domain.Interfaces;
 using Mentora.Core.Data;
 using Mentora.APIs.DTOs;
+using Mentora.Infra.Data;
 
 namespace Mentora.Infra.Services;
 
@@ -184,55 +185,7 @@ public class RoleService : IRoleService
         }
     }
 
-    public async Task<IEnumerable<RoleResponse>> GetAllUsersWithRolesAsync()
-    {
-        try
-        {
-            var users = _userManager.Users.ToList();
-            var result = new List<RoleResponse>();
 
-            foreach (var user in users)
-            {
-                var roles = await _userManager.GetRolesAsync(user);
-                var roleName = roles.FirstOrDefault() ?? "Mentee";
-                var userRole = roleName switch
-                {
-                    "Admin" => UserRole.Admin,
-                    "Mentor" => UserRole.Mentor,
-                    _ => UserRole.Mentee
-                };
-
-                result.Add(new RoleResponse
-                {
-                    UserId = user.Id,
-                    Email = user.Email ?? string.Empty,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Role = userRole,
-                    RoleName = userRole.ToDisplayName(),
-                    RoleDescription = userRole.ToDescription(),
-                    AssignedAt = user.CreatedAt
-                });
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting all users with roles");
-            return Enumerable.Empty<RoleResponse>();
-        }
-    }
-
-    public async Task<IEnumerable<UserRoleDto>> GetAllAvailableRolesAsync()
-    {
-        return await Task.FromResult(Enum.GetValues<UserRole>().Select(role => new UserRoleDto
-        {
-            Role = role,
-            Name = role.ToDisplayName(),
-            Description = role.ToDescription()
-        }));
-    }
 
     public async Task<bool> UserHasRoleAsync(string userId, UserRole role)
     {
@@ -309,72 +262,6 @@ public class RoleService : IRoleService
         {
             _logger.LogError(ex, "Error seeding default roles");
             return false;
-        }
-    }
-
-    // Additional methods for RoleController - not part of domain interface
-    public async Task<IEnumerable<RoleResponse>> GetAllUsersWithRolesAsync()
-    {
-        try
-        {
-            var users = _userManager.Users.ToList();
-            var result = new List<RoleResponse>();
-
-            foreach (var user in users)
-            {
-                var roles = await _userManager.GetRolesAsync(user);
-                var roleName = roles.FirstOrDefault() ?? "Mentee";
-                var userRole = roleName switch
-                {
-                    "Admin" => UserRole.Admin,
-                    "Mentor" => UserRole.Mentor,
-                    _ => UserRole.Mentee
-                };
-
-                result.Add(new RoleResponse
-                {
-                    UserId = user.Id,
-                    Email = user.Email ?? string.Empty,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Role = userRole,
-                    RoleName = userRole.ToDisplayName(),
-                    RoleDescription = userRole.ToDescription(),
-                    AssignedAt = user.CreatedAt
-                });
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting all users with roles");
-            return Enumerable.Empty<RoleResponse>();
-        }
-    }
-
-    public async Task<IEnumerable<UserRoleDto>> GetAllAvailableRolesAsync()
-    {
-        return await Task.FromResult(Enum.GetValues<UserRole>().Select(role => new UserRoleDto
-        {
-            Role = role,
-            Name = role.ToDisplayName(),
-            Description = role.ToDescription()
-        }));
-    }
-
-    public async Task<IEnumerable<string>> GetUsersInRoleAsync(UserRole role)
-    {
-        try
-        {
-            var roleName = RoleMapping[role];
-            var users = await _userManager.GetUsersInRoleAsync(roleName);
-            return users.Select(u => u.Id);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting users in role {Role}", role);
-            return Enumerable.Empty<string>();
         }
     }
 }

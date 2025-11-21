@@ -4,7 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Mentora.Domain.Interfaces;
-using Mentora.Core.Data;
+using Mentora.Domain.Models;
 
 namespace Mentora.Infra.Services;
 
@@ -25,7 +25,7 @@ public class JwtService : IJwtService
         _expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
     }
 
-    public string GenerateToken(ApplicationUser user)
+    public string GenerateToken(IUser user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_secretKey);

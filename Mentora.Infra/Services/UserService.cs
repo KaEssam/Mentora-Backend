@@ -1,7 +1,8 @@
 using Mentora.Domain.Interfaces;
+using Mentora.Domain.Models;
 using Mentora.Infra.Data;
 
-namespace Mentora.Domain.Services;
+namespace Mentora.Infra.Services;
 
 public class UserService : IUserService
 {
