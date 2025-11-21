@@ -74,7 +74,34 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // Role-based policies
+    options.AddPolicy("RequireAdminRole", policy =>
+        policy.RequireRole("Admin"));
+
+    options.AddPolicy("RequireMentorRole", policy =>
+        policy.RequireRole("Mentor", "Admin"));
+
+    options.AddPolicy("RequireMenteeRole", policy =>
+        policy.RequireRole("Mentee", "Admin"));
+
+    // Custom operation-based policies
+    options.AddPolicy("CanManageRoles", policy =>
+        policy.RequireRole("Admin"));
+
+    options.AddPolicy("CanManageUsers", policy =>
+        policy.RequireRole("Admin"));
+
+    options.AddPolicy("CanCreateSessions", policy =>
+        policy.RequireRole("Mentor", "Admin"));
+
+    options.AddPolicy("CanBookSessions", policy =>
+        policy.RequireRole("Mentee", "Admin"));
+
+    options.AddPolicy("CanViewAnalytics", policy =>
+        policy.RequireRole("Admin"));
+});
 
 // Configure Cloudinary Settings
 builder.Services.Configure<Mentora.Domain.Models.CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
@@ -83,10 +110,13 @@ builder.Services.Configure<Mentora.Domain.Models.CloudinarySettings>(builder.Con
 builder.Services.AddScoped<IJwtService, JwtService>();
 
 // Register Domain services
-builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+
+// Register Infrastructure services (services that depend on ASP.NET Core Identity)
+builder.Services.AddScoped<IUserService, Mentora.Infra.Services.UserService>();
+builder.Services.AddScoped<IRoleService, Mentora.Infra.Services.RoleService>();
 
 // Register Infrastructure services
 // Switching back to CloudinaryService - it was working before
@@ -149,9 +179,9 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.MapOpenApi();
+app.UseSwagger();
+app.UseSwaggerUI();
+app.MapOpenApi();
 
 
 

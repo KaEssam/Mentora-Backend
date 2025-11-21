@@ -1,5 +1,5 @@
 using Mentora.Domain.Interfaces;
-using Mentora.Core.Data;
+using Mentora.Infra.Data;
 
 namespace Mentora.Domain.Services;
 
@@ -14,17 +14,17 @@ public class UserService : IUserService
         _jwtService = jwtService;
     }
 
-    public async Task<ApplicationUser?> GetUserByIdAsync(string id)
+    public async Task<IUser?> GetUserByIdAsync(string id)
     {
         return await _userRepository.GetByIdAsync(id);
     }
 
-    public async Task<ApplicationUser?> GetUserByEmailAsync(string email)
+    public async Task<IUser?> GetUserByEmailAsync(string email)
     {
         return await _userRepository.GetByEmailAsync(email);
     }
 
-    public async Task<ApplicationUser> CreateUserAsync(ApplicationUser user, string password)
+    public async Task<IUser> CreateUserAsync(IUser user, string password)
     {
         // Business validation
         if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
@@ -43,7 +43,7 @@ public class UserService : IUserService
         return await _userRepository.CreateWithPasswordAsync(user, password);
     }
 
-    public async Task<ApplicationUser> UpdateUserAsync(ApplicationUser user)
+    public async Task<IUser> UpdateUserAsync(IUser user)
     {
         var existingUser = await _userRepository.GetByIdAsync(user.Id);
         if (existingUser == null)
@@ -90,7 +90,7 @@ public class UserService : IUserService
         return await _userRepository.ExistsByEmailAsync(email);
     }
 
-    public async Task<IEnumerable<ApplicationUser>> GetAllUsersAsync()
+    public async Task<IEnumerable<IUser>> GetAllUsersAsync()
     {
         return await _userRepository.GetAllAsync();
     }

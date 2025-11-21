@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Identity;
+using Mentora.Domain.Models;
 
 namespace Mentora.Infra.Data;
 
-public class ApplicationUser : IdentityUser
+public class ApplicationUser : IdentityUser, IUser
 {
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;

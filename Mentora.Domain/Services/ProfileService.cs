@@ -76,39 +76,31 @@ public class ProfileService : IProfileService
 
         // Create a new user instance with only the fields that should be updated
         // This avoids Entity Framework tracking conflicts and only updates provided fields
-        var userToUpdate = new ApplicationUser
-        {
-            Id = user.Id,
-            Email = user.Email, // Email shouldn't change in profile update
-            UserName = user.Email, // Identity requires UserName
+        // Update user properties directly on the existing user object
+        user.FirstName = (!string.IsNullOrEmpty(request.FirstName) && request.FirstName != "string") ? request.FirstName : user.FirstName;
+        user.LastName = (!string.IsNullOrEmpty(request.LastName) && request.LastName != "string") ? request.LastName : user.LastName;
+        user.Bio = (!string.IsNullOrEmpty(request.Bio) && request.Bio != "string") ? request.Bio : user.Bio;
+        // ProfileImageUrl is already set above if image was uploaded
+        user.Title = (!string.IsNullOrEmpty(request.Title) && request.Title != "string") ? request.Title : user.Title;
+        user.Company = (!string.IsNullOrEmpty(request.Company) && request.Company != "string") ? request.Company : user.Company;
+        user.Location = (!string.IsNullOrEmpty(request.Location) && request.Location != "string") ? request.Location : user.Location;
+        user.Skills = (!string.IsNullOrEmpty(request.Skills) && request.Skills != "string") ? request.Skills : user.Skills;
+        user.Languages = (!string.IsNullOrEmpty(request.Languages) && request.Languages != "string") ? request.Languages : user.Languages;
+        user.Education = (!string.IsNullOrEmpty(request.Education) && request.Education != "string") ? request.Education : user.Education;
+        user.SocialMedia = (!string.IsNullOrEmpty(request.SocialMedia) && request.SocialMedia != "string") ? request.SocialMedia : user.SocialMedia;
 
-            // Only update fields if they are provided in the request and not empty strings or placeholder values
-            FirstName = (!string.IsNullOrEmpty(request.FirstName) && request.FirstName != "string") ? request.FirstName : user.FirstName,
-            LastName = (!string.IsNullOrEmpty(request.LastName) && request.LastName != "string") ? request.LastName : user.LastName,
-            Bio = (!string.IsNullOrEmpty(request.Bio) && request.Bio != "string") ? request.Bio : user.Bio,
-            ProfileImageUrl = user.ProfileImageUrl, // Already set above if image was uploaded
-            Title = (!string.IsNullOrEmpty(request.Title) && request.Title != "string") ? request.Title : user.Title,
-            Company = (!string.IsNullOrEmpty(request.Company) && request.Company != "string") ? request.Company : user.Company,
-            Location = (!string.IsNullOrEmpty(request.Location) && request.Location != "string") ? request.Location : user.Location,
-            Skills = (!string.IsNullOrEmpty(request.Skills) && request.Skills != "string") ? request.Skills : user.Skills,
-            Languages = (!string.IsNullOrEmpty(request.Languages) && request.Languages != "string") ? request.Languages : user.Languages,
-            Education = (!string.IsNullOrEmpty(request.Education) && request.Education != "string") ? request.Education : user.Education,
-            SocialMedia = (!string.IsNullOrEmpty(request.SocialMedia) && request.SocialMedia != "string") ? request.SocialMedia : user.SocialMedia,
+        // Only update ExperienceYears if it's greater than 0 (since 0 might be default)
+        user.ExperienceYears = (request.ExperienceYears.HasValue && request.ExperienceYears.Value > 0)
+            ? request.ExperienceYears.Value
+            : user.ExperienceYears;
 
-            // Only update ExperienceYears if it's greater than 0 (since 0 might be default)
-            ExperienceYears = (request.ExperienceYears.HasValue && request.ExperienceYears.Value > 0)
-                ? request.ExperienceYears.Value
-                : user.ExperienceYears,
-
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = DateTime.UtcNow
-        };
+        user.UpdatedAt = DateTime.UtcNow;
 
         // Debug: Check what we're about to save
-        Console.WriteLine($"About to update user. ProfileImageUrl: {userToUpdate.ProfileImageUrl}");
+        Console.WriteLine($"About to update user. ProfileImageUrl: {user.ProfileImageUrl}");
 
         // Save user changes
-        var updatedUser = await _userService.UpdateUserAsync(userToUpdate);
+        var updatedUser = await _userService.UpdateUserAsync(user);
 
         // Debug: Check what was returned
         Console.WriteLine($"Update complete. Returned ProfileImageUrl: {updatedUser.ProfileImageUrl}");
