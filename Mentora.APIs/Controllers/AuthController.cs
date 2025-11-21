@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
-using Mentora.Core.Data;
 using Mentora.APIs.DTOs;
 using Mentora.Domain.Interfaces;
-using Mentora.Infra.Data;
+using Mentora.Core.Data;
 using Mentora.Infra.Services;
 
 namespace Mentora.APIs.Controllers;
@@ -23,29 +22,6 @@ public class AuthController(
     private readonly IJwtService _jwtService = jwtService;
     private readonly ILogger<AuthController> _logger = logger;
     private readonly IMapper _mapper = mapper;
-
-    private static User ConvertToUser(ApplicationUser applicationUser)
-    {
-        return new User
-        {
-            Id = applicationUser.Id,
-            Email = applicationUser.Email,
-            FirstName = applicationUser.FirstName,
-            LastName = applicationUser.LastName,
-            Bio = applicationUser.Bio,
-            ProfileImageUrl = applicationUser.ProfileImageUrl,
-            Title = applicationUser.Title,
-            Company = applicationUser.Company,
-            Location = applicationUser.Location,
-            CreatedAt = applicationUser.CreatedAt,
-            UpdatedAt = applicationUser.UpdatedAt,
-            Skills = applicationUser.Skills,
-            Languages = applicationUser.Languages,
-            ExperienceYears = applicationUser.ExperienceYears,
-            Education = applicationUser.Education,
-            SocialMedia = applicationUser.SocialMedia
-        };
-    }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest model)
@@ -84,7 +60,7 @@ public class AuthController(
             }
 
             // Generate JWT token
-            var token = _jwtService.GenerateToken(ConvertToUser(user));
+            var token = _jwtService.GenerateToken(user);
             var refreshToken = _jwtService.GenerateRefreshToken();
 
             _logger.LogInformation($"User {user.Email} registered successfully");
@@ -129,7 +105,7 @@ public class AuthController(
             }
 
             // Generate JWT token
-            var token = _jwtService.GenerateToken(ConvertToUser(user));
+            var token = _jwtService.GenerateToken(user);
             var refreshToken = _jwtService.GenerateRefreshToken();
 
             _logger.LogInformation($"User {user.Email} logged in successfully");
@@ -180,7 +156,7 @@ public class AuthController(
             }
 
             // Generate new tokens
-            var newToken = _jwtService.GenerateToken(ConvertToUser(user));
+            var newToken = _jwtService.GenerateToken(user);
             var newRefreshToken = _jwtService.GenerateRefreshToken();
 
             var response = new AuthResponse

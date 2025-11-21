@@ -17,6 +17,7 @@ public class File
     public DateTime UpdatedAt { get; set; }
     public bool IsActive { get; set; } = true;
 
-    // Navigation properties
-    public virtual User? UploadedBy { get; set; }
+    // Navigation properties will be configured in Infrastructure layer
+    // to avoid circular references with Core layer
+    // TODO: INTEGRATION - Navigation Properties - Consider using specification pattern or queries to avoid navigation properties in Core entities
 }

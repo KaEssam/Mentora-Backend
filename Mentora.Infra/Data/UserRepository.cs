@@ -16,92 +16,41 @@ public class UserRepository : IUserRepository
         _context = context;
     }
 
-    private static User ConvertToUser(ApplicationUser applicationUser)
+    public async Task<ApplicationUser?> GetByIdAsync(string id)
     {
-        return new User
-        {
-            Id = applicationUser.Id,
-            Email = applicationUser.Email,
-            FirstName = applicationUser.FirstName,
-            LastName = applicationUser.LastName,
-            Bio = applicationUser.Bio,
-            ProfileImageUrl = applicationUser.ProfileImageUrl,
-            Title = applicationUser.Title,
-            Company = applicationUser.Company,
-            Location = applicationUser.Location,
-            CreatedAt = applicationUser.CreatedAt,
-            UpdatedAt = applicationUser.UpdatedAt,
-            Skills = applicationUser.Skills,
-            Languages = applicationUser.Languages,
-            ExperienceYears = applicationUser.ExperienceYears,
-            Education = applicationUser.Education,
-            SocialMedia = applicationUser.SocialMedia
-        };
+        return await _userManager.FindByIdAsync(id);
     }
 
-    private static ApplicationUser ConvertToApplicationUser(User user)
+    public async Task<ApplicationUser?> GetByEmailAsync(string email)
     {
-        return new ApplicationUser
-        {
-            Id = user.Id,
-            Email = user.Email,
-            UserName = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            Bio = user.Bio,
-            ProfileImageUrl = user.ProfileImageUrl,
-            Title = user.Title,
-            Company = user.Company,
-            Location = user.Location,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt,
-            Skills = user.Skills,
-            Languages = user.Languages,
-            ExperienceYears = user.ExperienceYears,
-            Education = user.Education,
-            SocialMedia = user.SocialMedia
-        };
+        return await _userManager.FindByEmailAsync(email);
     }
 
-    public async Task<User?> GetByIdAsync(string id)
+    public async Task<ApplicationUser> CreateAsync(ApplicationUser user)
     {
-        var user = await _userManager.FindByIdAsync(id);
-        return user != null ? ConvertToUser(user) : null;
-    }
-
-    public async Task<User?> GetByEmailAsync(string email)
-    {
-        var user = await _userManager.FindByEmailAsync(email);
-        return user != null ? ConvertToUser(user) : null;
-    }
-
-    public async Task<User> CreateAsync(User user)
-    {
-        var applicationUser = ConvertToApplicationUser(user);
-        var result = await _userManager.CreateAsync(applicationUser);
+        var result = await _userManager.CreateAsync(user);
 
         if (!result.Succeeded)
         {
             throw new InvalidOperationException($"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
         }
 
-        return ConvertToUser(applicationUser);
+        return user;
     }
 
-    public async Task<User> CreateWithPasswordAsync(User user, string password)
+    public async Task<ApplicationUser> CreateWithPasswordAsync(ApplicationUser user, string password)
     {
-        var applicationUser = ConvertToApplicationUser(user);
-        var result = await _userManager.CreateAsync(applicationUser, password);
+        var result = await _userManager.CreateAsync(user, password);
 
         if (!result.Succeeded)
         {
             throw new InvalidOperationException($"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
         }
 
-        return ConvertToUser(applicationUser);
+        return user;
     }
 
-    public async Task<User> UpdateAsync(User user)
+    public async Task<ApplicationUser> UpdateAsync(ApplicationUser user)
     {
         // Get the existing ApplicationUser to avoid tracking conflicts
         var existingApplicationUser = await _userManager.FindByIdAsync(user.Id);
@@ -123,6 +72,7 @@ public class UserRepository : IUserRepository
         existingApplicationUser.ExperienceYears = user.ExperienceYears;
         existingApplicationUser.Education = user.Education;
         existingApplicationUser.SocialMedia = user.SocialMedia;
+        // TODO: INTEGRATION - Social Media Enhancement - Add social media verification and linking when social media integration is implemented
         existingApplicationUser.UpdatedAt = DateTime.UtcNow;
 
         // Update the tracked entity
@@ -133,7 +83,7 @@ public class UserRepository : IUserRepository
             throw new InvalidOperationException($"Failed to update user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
         }
 
-        return ConvertToUser(existingApplicationUser);
+        return existingApplicationUser;
     }
 
     public async Task<bool> DeleteAsync(string id)
@@ -150,9 +100,8 @@ public class UserRepository : IUserRepository
         return await _userManager.Users.AnyAsync(u => u.Email == email);
     }
 
-    public async Task<IEnumerable<User>> GetAllAsync()
+    public async Task<IEnumerable<ApplicationUser>> GetAllAsync()
     {
-        var users = await _userManager.Users.ToListAsync();
-        return users.Select(ConvertToUser);
+        return await _userManager.Users.ToListAsync();
     }
 }

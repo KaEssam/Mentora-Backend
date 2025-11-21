@@ -1,11 +1,11 @@
 using System.Security.Claims;
-using Mentora.Core.Data;
+using Mentora.Domain.Models;
 
 namespace Mentora.Domain.Interfaces;
 
 public interface IJwtService
 {
-    string GenerateToken(User user);
+    string GenerateToken(IUser user);
     ClaimsPrincipal? ValidateToken(string token);
     string GenerateRefreshToken();
 }

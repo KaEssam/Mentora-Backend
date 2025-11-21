@@ -22,14 +22,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
         // ApplicationUser is configured by Identity automatically
 
-        // Configure User entity to ignore navigation properties that conflict
-        builder.Entity<User>(entity =>
-        {
-            entity.Ignore(e => e.MentorSessions);
-            entity.Ignore(e => e.MentorBookings);
-            entity.Ignore(e => e.MenteeBookings);
-        });
-
         // Configure Session entity
         builder.Entity<Session>(entity =>
         {
@@ -38,16 +30,21 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.MentorId).IsRequired().HasMaxLength(450);
             entity.Property(e => e.Price).HasPrecision(18, 2);
 
+            // Configure navigation property to ApplicationUser
             entity.HasOne<ApplicationUser>()
                   .WithMany(e => e.MentorSessions)
                   .HasForeignKey(e => e.MentorId)
                   .OnDelete(DeleteBehavior.Cascade);
 
-            // Ignore the navigation property to User since it conflicts with ApplicationUser mapping
-            entity.Ignore(e => e.Mentor);
+            // Configure collection navigation for bookings
+            entity.HasMany<Booking>()
+                  .WithOne()
+                  .HasForeignKey(e => e.SessionId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
             // Ensure EndAt is after StartAt
             entity.ToTable(t => t.HasCheckConstraint("CK_Session_EndAt_After_StartAt", "EndAt > StartAt"));
+            // TODO: INTEGRATION - Session Enhancement - Add session recurrence pattern configuration when session scheduling features are implemented
         });
 
         // Configure Booking entity
@@ -59,27 +56,26 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.MentorId).IsRequired().HasMaxLength(450);
             entity.Property(e => e.MenteeId).IsRequired().HasMaxLength(450);
 
-            entity.HasOne(e => e.Session)
-                  .WithMany(e => e.Bookings)
+            // Configure navigation to Session
+            entity.HasOne<Session>()
+                  .WithMany()
                   .HasForeignKey(e => e.SessionId)
                   .OnDelete(DeleteBehavior.Cascade);
 
-            // Configure explicit relationships with ApplicationUser to avoid shadow properties
+            // Configure navigation to ApplicationUser (Mentor)
             entity.HasOne<ApplicationUser>()
                   .WithMany(e => e.MentorBookings)
                   .HasForeignKey(e => e.MentorId)
                   .OnDelete(DeleteBehavior.Restrict)
                   .HasConstraintName("FK_Booking_Mentor_ApplicationUser");
 
+            // Configure navigation to ApplicationUser (Mentee)
             entity.HasOne<ApplicationUser>()
                   .WithMany(e => e.MenteeBookings)
                   .HasForeignKey(e => e.MenteeId)
                   .OnDelete(DeleteBehavior.Restrict)
                   .HasConstraintName("FK_Booking_Mentee_ApplicationUser");
-
-            // Ignore the navigation properties to User since they conflict with ApplicationUser mappings
-            entity.Ignore(e => e.Mentor);
-            entity.Ignore(e => e.Mentee);
+            // TODO: INTEGRATION - Payment Integration - Add payment status and transaction ID fields when payment system is implemented
         });
 
         // Configure File entity
@@ -92,13 +88,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.ContentType).IsRequired().HasMaxLength(100);
             entity.Property(e => e.UploadedById).IsRequired().HasMaxLength(450);
 
+            // Configure navigation to ApplicationUser
             entity.HasOne<ApplicationUser>()
                   .WithMany()
                   .HasForeignKey(e => e.UploadedById)
                   .OnDelete(DeleteBehavior.Cascade);
-
-            // Ignore the navigation property to User since it conflicts with ApplicationUser mapping
-            entity.Ignore(e => e.UploadedBy);
+            // TODO: INTEGRATION - File Processing - Add file processing status and metadata when file processing features are implemented
         });
 
         // Seed initial data

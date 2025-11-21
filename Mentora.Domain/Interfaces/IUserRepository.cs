@@ -1,15 +1,14 @@
-using Mentora.Core.Data;
+using Mentora.Domain.Models;
 
 namespace Mentora.Domain.Interfaces;
 
 public interface IUserRepository
 {
-    Task<User?> GetByIdAsync(string id);
-    Task<User?> GetByEmailAsync(string email);
-    Task<User> CreateAsync(User user);
-    Task<User> CreateWithPasswordAsync(User user, string password);
-    Task<User> UpdateAsync(User user);
+    Task<IUser?> GetByIdAsync(string id);
+    Task<IUser?> GetByEmailAsync(string email);
+    Task<IUser> CreateAsync(IUser user, string password);
+    Task<IUser> UpdateAsync(IUser user);
     Task<bool> DeleteAsync(string id);
     Task<bool> ExistsByEmailAsync(string email);
-    Task<IEnumerable<User>> GetAllAsync();
+    Task<IEnumerable<IUser>> GetAllAsync();
 }

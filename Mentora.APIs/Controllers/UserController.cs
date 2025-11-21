@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Mentora.Core.Data;
 using Mentora.Domain.Interfaces;
 using Mentora.Domain.Models;
+using Mentora.Core.Data;
 
 namespace Mentora.APIs.Controllers;
 
@@ -22,7 +22,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<User>> GetUser(string id)
+    public async Task<ActionResult<ApplicationUser>> GetUser(string id)
     {
         try
         {
@@ -82,7 +82,8 @@ public class UserController : ControllerBase
             Console.WriteLine($"Profile update error: {ex}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
 
-            return StatusCode(500, new {
+            return StatusCode(500, new
+            {
                 error = "An unexpected error occurred",
                 details = ex.Message
             });
@@ -91,7 +92,8 @@ public class UserController : ControllerBase
 
     [HttpGet("search")]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<User>>> SearchUsers([FromQuery] string? query = null, [FromQuery] string? skills = null, [FromQuery] string? location = null)
+    public async Task<ActionResult<IEnumerable<ApplicationUser>>> SearchUsers([FromQuery] string? query = null, [FromQuery] string? skills = null, [FromQuery] string? location = null)
+    // TODO: INTEGRATION - Advanced Search - Add Elasticsearch integration for improved search performance and relevance
     {
         try
         {

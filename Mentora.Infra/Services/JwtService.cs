@@ -25,7 +25,7 @@ public class JwtService : IJwtService
         _expirationMinutes = int.Parse(_configuration["JwtSettings:ExpirationMinutes"] ?? "60");
     }
 
-    public string GenerateToken(User user)
+    public string GenerateToken(ApplicationUser user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_secretKey);

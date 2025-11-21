@@ -28,13 +28,7 @@ public class Booking
     [StringLength(500)]
     public string? MeetingUrl { get; set; }
 
-    // Navigation properties
-    [ForeignKey("SessionId")]
-    public virtual Session Session { get; set; } = null!;
-
-    [ForeignKey("MentorId")]
-    public virtual User Mentor { get; set; } = null!;
-
-    [ForeignKey("MenteeId")]
-    public virtual User Mentee { get; set; } = null!;
+    // Navigation properties will be configured in Infrastructure layer
+    // to avoid circular references with Core layer
+    // TODO: INTEGRATION - Navigation Properties - Consider using specification pattern or queries to avoid navigation properties in Core entities
 }

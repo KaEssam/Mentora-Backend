@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using Mentora.Core.Data;
 
 namespace Mentora.Infra.Data;
 

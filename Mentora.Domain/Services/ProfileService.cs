@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
-using Mentora.Core.Data;
 using Mentora.Domain.Interfaces;
 using Mentora.Domain.Models;
+using Mentora.Core.Data;
 
 namespace Mentora.Domain.Services;
 
@@ -76,10 +76,11 @@ public class ProfileService : IProfileService
 
         // Create a new user instance with only the fields that should be updated
         // This avoids Entity Framework tracking conflicts and only updates provided fields
-        var userToUpdate = new User
+        var userToUpdate = new ApplicationUser
         {
             Id = user.Id,
             Email = user.Email, // Email shouldn't change in profile update
+            UserName = user.Email, // Identity requires UserName
 
             // Only update fields if they are provided in the request and not empty strings or placeholder values
             FirstName = (!string.IsNullOrEmpty(request.FirstName) && request.FirstName != "string") ? request.FirstName : user.FirstName,

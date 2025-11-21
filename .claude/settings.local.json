@@ -4,7 +4,10 @@
       "Bash(mkdir:*)",
       "Bash(dotnet build:*)",
       "Bash(dotnet ef:*)",
-      "Bash(dotnet add:*)"
+      "Bash(dotnet add:*)",
+      "Bash(taskkill:*)",
+      "Bash(nul)",
+      "Bash(dotnet clean:*)"
     ],
     "deny": [],
     "ask": []

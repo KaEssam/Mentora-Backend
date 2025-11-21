@@ -31,9 +31,7 @@ public class Session
     [StringLength(1000)]
     public string? Notes { get; set; }
 
-    // Navigation properties
-    [ForeignKey("MentorId")]
-    public virtual User Mentor { get; set; } = null!;
-
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    // Navigation properties will be configured in Infrastructure layer
+    // to avoid circular dependencies in the Core layer
+    // TODO: INTEGRATION - Navigation Properties - Consider using specification pattern or queries to avoid navigation properties in Core entities
 }
