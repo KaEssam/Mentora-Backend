@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Mentora.Domain.Interfaces;
 using Mentora.Domain.Models;
 using Mentora.Core.Data;
+using Mentora.Infra.Data;
 
 namespace Mentora.APIs.Controllers;
 

@@ -41,7 +41,7 @@ public class UserService : IUserService
         user.CreatedAt = DateTime.UtcNow;
         user.UpdatedAt = DateTime.UtcNow;
 
-        return await _userRepository.CreateWithPasswordAsync(user, password);
+        return await _userRepository.CreateAsync(user, password);
     }
 
     public async Task<IUser> UpdateUserAsync(IUser user)

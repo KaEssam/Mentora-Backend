@@ -76,31 +76,25 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization(options =>
 {
-    // Role-based policies
-    options.AddPolicy("RequireAdminRole", policy =>
-        policy.RequireRole("Admin"));
+    // Admin-only policies (using admin claim)
+    options.AddPolicy("RequireAdmin", policy =>
+        policy.RequireClaim("IsAdmin", "true"));
 
-    options.AddPolicy("RequireMentorRole", policy =>
-        policy.RequireRole("Mentor", "Admin"));
-
-    options.AddPolicy("RequireMenteeRole", policy =>
-        policy.RequireRole("Mentee", "Admin"));
-
-    // Custom operation-based policies
-    options.AddPolicy("CanManageRoles", policy =>
-        policy.RequireRole("Admin"));
-
-    options.AddPolicy("CanManageUsers", policy =>
-        policy.RequireRole("Admin"));
-
+    // Action-based policies - any authenticated user can perform these actions
     options.AddPolicy("CanCreateSessions", policy =>
-        policy.RequireRole("Mentor", "Admin"));
+        policy.RequireAuthenticatedUser()); // Any user can create sessions
 
     options.AddPolicy("CanBookSessions", policy =>
-        policy.RequireRole("Mentee", "Admin"));
+        policy.RequireAuthenticatedUser()); // Any user can book sessions
+
+    options.AddPolicy("CanManageRoles", policy =>
+        policy.RequireClaim("IsAdmin", "true"));
+
+    options.AddPolicy("CanManageUsers", policy =>
+        policy.RequireClaim("IsAdmin", "true"));
 
     options.AddPolicy("CanViewAnalytics", policy =>
-        policy.RequireRole("Admin"));
+        policy.RequireClaim("IsAdmin", "true"));
 });
 
 // Configure Cloudinary Settings
@@ -116,7 +110,6 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 
 // Register Infrastructure services (services that depend on ASP.NET Core Identity)
 builder.Services.AddScoped<IUserService, Mentora.Infra.Services.UserService>();
-builder.Services.AddScoped<IRoleService, Mentora.Infra.Services.RoleService>();
 
 // Register Infrastructure services
 // Switching back to CloudinaryService - it was working before

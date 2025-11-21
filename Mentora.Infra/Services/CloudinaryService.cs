@@ -11,7 +11,7 @@ namespace Mentora.Infra.Services;
 
 public class CloudinaryService : IFileService
 {
-    private readonly Cloudinary _cloudinary;
+    private readonly Cloudinary? _cloudinary;
     private readonly IFileRepository _fileRepository;
     private readonly CloudinarySettings _cloudinarySettings;
     private readonly List<string> _allowedImageTypes = new()

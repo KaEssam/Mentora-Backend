@@ -2,6 +2,7 @@ using AutoMapper;
 using Mentora.APIs.DTOs;
 using Mentora.Core.Data;
 using Mentora.Domain.Models;
+using Mentora.Infra.Data;
 
 namespace Mentora.APIs.Mappings;
 

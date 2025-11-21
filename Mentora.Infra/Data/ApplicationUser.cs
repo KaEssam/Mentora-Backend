@@ -20,6 +20,7 @@ public class ApplicationUser : IdentityUser, IUser
     public int ExperienceYears { get; set; }
     public string? Education { get; set; }
     public string? SocialMedia { get; set; }
+    public bool IsAdmin { get; set; } = false; // Simple admin flag
 
     // Navigation properties
     public virtual ICollection<Session> MentorSessions { get; set; } = new List<Session>();

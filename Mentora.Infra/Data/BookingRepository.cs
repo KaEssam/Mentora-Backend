@@ -17,8 +17,6 @@ public class BookingRepository : IBookingRepository
     {
         return await _context.Bookings
             .Include(b => b.Session)
-            .Include(b => b.Mentor)
-            .Include(b => b.Mentee)
             .FirstOrDefaultAsync(b => b.Id == id);
     }
 
@@ -27,7 +25,6 @@ public class BookingRepository : IBookingRepository
         return await _context.Bookings
             .Where(b => b.MentorId == mentorId)
             .Include(b => b.Session)
-            .Include(b => b.Mentee)
             .OrderBy(b => b.Session.StartAt)
             .ToListAsync();
     }
@@ -37,7 +34,6 @@ public class BookingRepository : IBookingRepository
         return await _context.Bookings
             .Where(b => b.MenteeId == menteeId)
             .Include(b => b.Session)
-            .Include(b => b.Mentor)
             .OrderBy(b => b.Session.StartAt)
             .ToListAsync();
     }
@@ -47,8 +43,6 @@ public class BookingRepository : IBookingRepository
         return await _context.Bookings
             .Where(b => b.SessionId == sessionId)
             .Include(b => b.Session)
-            .Include(b => b.Mentor)
-            .Include(b => b.Mentee)
             .ToListAsync();
     }
 
@@ -86,8 +80,6 @@ public class BookingRepository : IBookingRepository
         return await _context.Bookings
             .Where(b => b.Status == status)
             .Include(b => b.Session)
-            .Include(b => b.Mentor)
-            .Include(b => b.Mentee)
             .OrderBy(b => b.Session.StartAt)
             .ToListAsync();
     }

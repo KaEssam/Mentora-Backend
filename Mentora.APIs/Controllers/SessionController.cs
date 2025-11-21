@@ -1,5 +1,6 @@
-﻿using Mentora.APIs.DTOs;
+using Mentora.APIs.DTOs;
 using Mentora.Domain.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -8,6 +9,7 @@ namespace Mentora.APIs.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // All endpoints require authentication
     public class SessionController : ControllerBase
     {
         private readonly ISessionService _service;
@@ -16,9 +18,8 @@ namespace Mentora.APIs.Controllers
             _service = service;
         }
 
-
         [HttpPost]
-        public async Task<IActionResult> CreateSessionAsync(CreateSessionDto sessionDto)
+        public async Task<IActionResult> CreateSessionAsync([FromBody] CreateSessionDto sessionDto)
         {
             var mentorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 

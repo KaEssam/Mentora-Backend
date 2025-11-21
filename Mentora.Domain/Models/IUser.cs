@@ -18,4 +18,5 @@ public interface IUser
     int ExperienceYears { get; set; }
     string? Education { get; set; }
     string? SocialMedia { get; set; }
+    bool IsAdmin { get; set; }
 }

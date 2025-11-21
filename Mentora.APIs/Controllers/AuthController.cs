@@ -5,6 +5,7 @@ using Mentora.APIs.DTOs;
 using Mentora.Domain.Interfaces;
 using Mentora.Core.Data;
 using Mentora.Infra.Services;
+using Mentora.Infra.Data;
 
 namespace Mentora.APIs.Controllers;
 
